@@ -22,6 +22,9 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.labeling.ImgLabeling;
+import net.imglib2.roi.labeling.LabelRegion;
+import net.imglib2.roi.labeling.LabelRegions;
+import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import org.scijava.command.Command;
@@ -73,6 +76,10 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         ImgLabeling cca = ij.op().labeling().cca(rai2, ConnectedComponents.StructuringElement.FOUR_CONNECTED);
 
         // measure the size of the labels and write them in a table
+        LabelRegions<IntegerType> regions = new LabelRegions(cca);
+        for (LabelRegion region : regions) {
+            System.out.println("Region: " + region.size());
+        }
 
         // measure the intensity of the labels and write them in the same table
 
