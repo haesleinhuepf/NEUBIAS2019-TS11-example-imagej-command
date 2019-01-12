@@ -10,11 +10,13 @@ package net.haesleinhuepf.imagej;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.measure.Calibration;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.legacy.LegacyService;
 import net.imagej.ops.OpService;
 import net.imagej.patcher.LegacyInjector;
+import net.imagej.table.*;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.labeling.ConnectedComponents;
@@ -76,10 +78,27 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         ImgLabeling cca = ij.op().labeling().cca(rai2, ConnectedComponents.StructuringElement.FOUR_CONNECTED);
 
         // measure the size of the labels and write them in a table
+        IntColumn indexColumn = new IntColumn();
+        FloatColumn areaColumn = new FloatColumn();
+
+        Calibration calibration = inputImage.getCalibration();
+
         LabelRegions<IntegerType> regions = new LabelRegions(cca);
+        int count = 0;
         for (LabelRegion region : regions) {
             System.out.println("Region: " + region.size());
+
+            indexColumn.add(count);
+            areaColumn.add((float)(region.size() * calibration.pixelWidth * calibration.pixelHeight));
+            count ++;
         }
+
+        Table table = new DefaultGenericTable();
+        table.add(indexColumn);
+        table.add(areaColumn);
+        table.setColumnHeader(0, "Index");
+        table.setColumnHeader(1, "Area in " + calibration.getUnit());
+        ij.ui().show(table);
 
         // measure the intensity of the labels and write them in the same table
 
