@@ -10,9 +10,13 @@ package net.haesleinhuepf.imagej;
 
 import bdv.util.BdvFunctions;
 import bdv.util.BdvStackSource;
+import clearcl.ClearCLBuffer;
+import coremem.enums.NativeTypeEnum;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
+import net.haesleinhuepf.clij.CLIJ;
+import net.haesleinhuepf.clij.kernels.Kernels;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.legacy.LegacyService;
@@ -74,29 +78,40 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         System.out.println("Current image is: " + inputImage.getTitle());
 
         // convert and show the input image
-        RandomAccessibleInterval rai = ImageJFunctions.convertFloat(inputImage);
-        BdvStackSource originalBdvView = BdvFunctions.show(rai, "original");
-        RealType mean1 = ij.op().stats().mean(Views.iterable(rai));
-        originalBdvView.setDisplayRange(mean1.getRealFloat() - 100, mean1.getRealFloat() + 100);
+        CLIJ clij = CLIJ.getInstance();
+        ClearCLBuffer input = clij.push(inputImage);
 
         // blur the image a bit
-        RandomAccessibleInterval blurred = ij.op().filter().gauss(rai, 1, 1, 0);
+        ClearCLBuffer blurred = clij.createCLBuffer(input.getDimensions(), NativeTypeEnum.Float);
+        Kernels.blurFast(clij, input, blurred, 1, 1, 0);
+        ClearCLBuffer background = clij.createCLBuffer(input.getDimensions(), NativeTypeEnum.Float);
+        Kernels.blurFast(clij, input, background, 3, 3, 0);
 
         // subtract background; result becomes a Difference-of-Gaussian image
-        RandomAccessibleInterval background = ij.op().filter().gauss(rai, 5, 5, 0);
-        IterableInterval backgroundSubtracted = ij.op().math().subtract(Views.iterable(blurred), Views.iterable(background));
-        RandomAccessibleInterval backgroundSubtractedRai = ij.op().convert().float32(backgroundSubtracted);
-
-        ij.ui().show(backgroundSubtractedRai);
+        ClearCLBuffer backgroundSubtracted = clij.createCLBuffer(input.getDimensions(), NativeTypeEnum.Float);
+        Kernels.addImagesWeighted(clij, blurred, background, backgroundSubtracted, 1f, -1f);
+        clij.show(backgroundSubtracted, "background subtracted");
 
         // threshold the image
-        IterableInterval ii = Views.iterable(backgroundSubtractedRai);
-        IterableInterval otsuThresholded = ij.op().threshold().otsu(ii);
-        ij.ui().show(otsuThresholded);
+        ClearCLBuffer thresholded = clij.createCLBuffer(input);
+        Kernels.threshold(clij, backgroundSubtracted, thresholded, 1f);
 
         // erode ROI
-        RandomAccessibleInterval otsuRai = ij.op().convert().bit(otsuThresholded);
-        IterableInterval erodedII = ij.op().morphology().erode(otsuRai, new DiamondShape(2));
+        ClearCLBuffer eroded = clij.createCLBuffer(thresholded);
+        Kernels.erodeBox(clij, thresholded, eroded);
+        clij.show(eroded, "eroded");
+
+        ImagePlus erodedImp = clij.pull(eroded);
+
+        // cleanup GPU
+        input.close();
+        blurred.close();
+        background.close();
+        backgroundSubtracted.close();
+        thresholded.close();
+        eroded.close();
+
+        Img<FloatType> erodedII = ImageJFunctions.convertFloat(erodedImp);
 
         // apply connected components labelling
         RandomAccessibleInterval rai2 = ij.op().convert().int32(erodedII);
@@ -109,7 +124,7 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
 
         Calibration calibration = inputImage.getCalibration();
 
-        Img<ARGBType> result = ArrayImgs.argbs(new long[]{rai.dimension(0), rai.dimension(1), rai.dimension(2)});
+        Img<ARGBType> result = ArrayImgs.argbs(new long[]{erodedII.dimension(0), erodedII.dimension(1), erodedII.dimension(2)});
         Random random = new Random();
 
         LabelRegions<IntegerType> regions = new LabelRegions(cca);
@@ -121,13 +136,13 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
             DoubleType size = ij.op().geom().size(mesh);
 
 
-            if (size.get() < 343) {
+            if (size.get() > 27 && size.get() < 343) {
                 System.out.println("Region: " + region.size());
 
                 indexColumn.add(count);
                 areaColumn.add((float) (pixelCount * calibration.pixelWidth * calibration.pixelHeight));
 
-                IterableInterval sample = Regions.sample(region, rai);
+                IterableInterval sample = Regions.sample(region, erodedII);
                 RealType mean = ij.op().stats().mean(sample);
                 averageColumn.add(mean.getRealFloat());
 

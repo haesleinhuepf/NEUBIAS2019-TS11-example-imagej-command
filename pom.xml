@@ -14,7 +14,7 @@
 
 	<groupId>net.haeseleinhuepf</groupId>
 	<artifactId>neubias-ts11-example-workflow-java</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.2</version>
 
 	<name>NEUBIAS TS11 example workflow</name>
 	<description>A Maven project implementing an ImageJ workflow.</description>
@@ -87,6 +87,10 @@
 			<id>imagej.public</id>
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
+		<repository>
+			<id>clij</id>
+			<url>http://dl.bintray.com/haesleinhuepf/clij</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -103,5 +107,11 @@
 			<artifactId>bigdataviewer-vistools</artifactId>
 			<version>1.0.0-beta-12</version>
 		</dependency>
+		<dependency>
+			<groupId>net.haesleinhuepf</groupId>
+			<artifactId>clij_</artifactId>
+			<version>0.12.3</version>
+		</dependency>
 	</dependencies>
+
 </project>
