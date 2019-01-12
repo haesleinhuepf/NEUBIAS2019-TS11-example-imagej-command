@@ -16,12 +16,15 @@ import ij.measure.Calibration;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.legacy.LegacyService;
+import net.imagej.mesh.Mesh;
 import net.imagej.ops.OpService;
 import net.imagej.patcher.LegacyInjector;
 import net.imagej.table.*;
+import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.labeling.ConnectedComponents;
+import net.imglib2.algorithm.neighborhood.DiamondShape;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -29,8 +32,11 @@ import net.imglib2.roi.Regions;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
@@ -40,6 +46,7 @@ import org.scijava.ui.UIService;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * This example illustrates how to create an ImageJ {@link Command} plugin.
@@ -68,15 +75,15 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
 
         // convert and show the input image
         RandomAccessibleInterval rai = ImageJFunctions.convertFloat(inputImage);
-        //BdvStackSource originalBdvView = BdvFunctions.show(rai, "original");
-        //RealType mean1 = ij.op().stats().mean(Views.iterable(rai));
-        //originalBdvView.setDisplayRange(mean1.getRealFloat() - 100, mean1.getRealFloat() + 100);
+        BdvStackSource originalBdvView = BdvFunctions.show(rai, "original");
+        RealType mean1 = ij.op().stats().mean(Views.iterable(rai));
+        originalBdvView.setDisplayRange(mean1.getRealFloat() - 100, mean1.getRealFloat() + 100);
 
         // blur the image a bit
         RandomAccessibleInterval blurred = ij.op().filter().gauss(rai, 1, 1, 0);
 
         // subtract background; result becomes a Difference-of-Gaussian image
-        RandomAccessibleInterval background = ij.op().filter().gauss(rai, 2, 2, 0);
+        RandomAccessibleInterval background = ij.op().filter().gauss(rai, 5, 5, 0);
         IterableInterval backgroundSubtracted = ij.op().math().subtract(Views.iterable(blurred), Views.iterable(background));
         RandomAccessibleInterval backgroundSubtractedRai = ij.op().convert().float32(backgroundSubtracted);
 
@@ -87,8 +94,12 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         IterableInterval otsuThresholded = ij.op().threshold().otsu(ii);
         ij.ui().show(otsuThresholded);
 
+        // erode ROI
+        RandomAccessibleInterval otsuRai = ij.op().convert().bit(otsuThresholded);
+        IterableInterval erodedII = ij.op().morphology().erode(otsuRai, new DiamondShape(2));
+
         // apply connected components labelling
-        RandomAccessibleInterval rai2 = ij.op().convert().int32(otsuThresholded);
+        RandomAccessibleInterval rai2 = ij.op().convert().int32(erodedII);
         ImgLabeling cca = ij.op().labeling().cca(rai2, ConnectedComponents.StructuringElement.FOUR_CONNECTED);
 
         // measure the size of the labels and write them in a table
@@ -97,14 +108,20 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         FloatColumn averageColumn = new FloatColumn();
 
         Calibration calibration = inputImage.getCalibration();
-        
+
+        Img<ARGBType> result = ArrayImgs.argbs(new long[]{rai.dimension(0), rai.dimension(1), rai.dimension(2)});
+        Random random = new Random();
 
         LabelRegions<IntegerType> regions = new LabelRegions(cca);
         int count = 0;
         for (LabelRegion region : regions) {
-
+            Mesh mesh = ij.op().geom().marchingCubes(region);
             long pixelCount = region.size();
-            if (pixelCount < 9) {
+
+            DoubleType size = ij.op().geom().size(mesh);
+
+
+            if (size.get() < 343) {
                 System.out.println("Region: " + region.size());
 
                 indexColumn.add(count);
@@ -113,9 +130,21 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
                 IterableInterval sample = Regions.sample(region, rai);
                 RealType mean = ij.op().stats().mean(sample);
                 averageColumn.add(mean.getRealFloat());
+
+                ARGBType colour = new ARGBType(random.nextInt());
+
+                IterableInterval<ARGBType> resultRegionIterable = Regions.sample(region, result);
+                Cursor<ARGBType> cursor = resultRegionIterable.cursor();
+                while (cursor.hasNext()) {
+                    cursor.next().set(colour);
+                }
             }
             count ++;
         }
+        //ij.ui().show(result);
+        ImageJFunctions.show(result);
+        BdvFunctions.show(result, "Labelling");
+
 
         Table table = new DefaultGenericTable();
         table.add(indexColumn);
