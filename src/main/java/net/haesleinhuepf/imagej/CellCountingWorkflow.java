@@ -17,9 +17,11 @@ import net.imagej.ops.OpService;
 import net.imagej.patcher.LegacyInjector;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.labeling.ConnectedComponents;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import org.scijava.command.Command;
@@ -67,6 +69,8 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         ij.ui().show(otsuThresholded);
 
         // apply connected components labelling
+        RandomAccessibleInterval rai2 = ij.op().convert().int32(otsuThresholded);
+        ImgLabeling cca = ij.op().labeling().cca(rai2, ConnectedComponents.StructuringElement.FOUR_CONNECTED);
 
         // measure the size of the labels and write them in a table
 
