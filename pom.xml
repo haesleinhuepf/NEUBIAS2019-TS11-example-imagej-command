@@ -12,17 +12,17 @@
 		<relativePath />
 	</parent>
 
-	<groupId>com.mycompany</groupId>
-	<artifactId>GaussFiltering</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<groupId>net.haeseleinhuepf</groupId>
+	<artifactId>neubias-ts11-example-workflow-java</artifactId>
+	<version>0.1.0</version>
 
-	<name>Gauss Filtering</name>
-	<description>A Maven project implementing an ImageJ command.</description>
-	<url>http://mycompany.com/imagej/gauss-filtering/</url>
-	<inceptionYear>2017</inceptionYear>
+	<name>NEUBIAS TS11 example workflow</name>
+	<description>A Maven project implementing an ImageJ workflow.</description>
+	<url>https://github.com/haesleinhuepf/NEUBIAS2019-TS11-example-imagej-command/</url>
+	<inceptionYear>2019</inceptionYear>
 	<organization>
-		<name>My Company</name>
-		<url>http://mycompany.com/</url>
+		<name>Haesleinhuepf</name>
+		<url>http://haesleinhuepf.net/</url>
 	</organization>
 	<licenses>
 		<license>
@@ -34,9 +34,9 @@
 	<developers>
 		<!-- See https://imagej.net/Team -->
 		<developer>
-			<id>ctrueden</id>
-			<name>Curtis Rueden</name>
-			<url>http://imagej.net/User:Rueden</url>
+			<id>haesleinhueof</id>
+			<name>Robert Haase</name>
+			<url>http://imagej.net/User:Haesleinhuepf</url>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -50,10 +50,7 @@
 	</developers>
 	<contributors>
 		<contributor>
-			<name>Yili Zhao</name>
-			<url>http://imagej.net/User:Panovr</url>
-			<roles><role>founder</role></roles>
-			<properties><id>panovr</id></properties>
+			<name>-</name>
 		</contributor>
 	</contributors>
 
