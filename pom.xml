@@ -14,7 +14,7 @@
 
 	<groupId>net.haeseleinhuepf</groupId>
 	<artifactId>neubias-ts11-example-workflow-java</artifactId>
-	<version>0.1.0</version>
+	<version>0.1.1</version>
 
 	<name>NEUBIAS TS11 example workflow</name>
 	<description>A Maven project implementing an ImageJ workflow.</description>
