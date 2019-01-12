@@ -68,16 +68,22 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
 
         // convert and show the input image
         RandomAccessibleInterval rai = ImageJFunctions.convertFloat(inputImage);
-        BdvStackSource originalBdvView = BdvFunctions.show(rai, "original");
-        RealType mean1 = ij.op().stats().mean(Views.iterable(rai));
-        originalBdvView.setDisplayRange(mean1.getRealFloat() - 100, mean1.getRealFloat() + 100);
+        //BdvStackSource originalBdvView = BdvFunctions.show(rai, "original");
+        //RealType mean1 = ij.op().stats().mean(Views.iterable(rai));
+        //originalBdvView.setDisplayRange(mean1.getRealFloat() - 100, mean1.getRealFloat() + 100);
 
         // blur the image a bit
-        RandomAccessibleInterval blurred = ij.op().filter().gauss(rai, 5);
-        ij.ui().show(blurred);
+        RandomAccessibleInterval blurred = ij.op().filter().gauss(rai, 1, 1, 0);
+
+        // subtract background; result becomes a Difference-of-Gaussian image
+        RandomAccessibleInterval background = ij.op().filter().gauss(rai, 2, 2, 0);
+        IterableInterval backgroundSubtracted = ij.op().math().subtract(Views.iterable(blurred), Views.iterable(background));
+        RandomAccessibleInterval backgroundSubtractedRai = ij.op().convert().float32(backgroundSubtracted);
+
+        ij.ui().show(backgroundSubtractedRai);
 
         // threshold the image
-        IterableInterval ii = Views.iterable(rai);
+        IterableInterval ii = Views.iterable(backgroundSubtractedRai);
         IterableInterval otsuThresholded = ij.op().threshold().otsu(ii);
         ij.ui().show(otsuThresholded);
 
@@ -117,8 +123,6 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         table.add(averageColumn);
         table.setColumnHeader(2, "Mean intensity");
         ij.ui().show(table);
-
-
     }
 
     /**
