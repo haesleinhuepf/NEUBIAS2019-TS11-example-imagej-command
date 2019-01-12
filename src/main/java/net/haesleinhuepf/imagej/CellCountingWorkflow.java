@@ -8,6 +8,8 @@
 
 package net.haesleinhuepf.imagej;
 
+import bdv.util.BdvFunctions;
+import bdv.util.BdvStackSource;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
@@ -66,6 +68,10 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
 
         // blur the image a bit
         RandomAccessibleInterval rai = ImageJFunctions.convertFloat(inputImage);
+        BdvStackSource originalBdvView = BdvFunctions.show(rai, "original");
+        RealType mean1 = ij.op().stats().mean(Views.iterable(rai));
+        originalBdvView.setDisplayRange(mean1.getRealFloat() - 100, mean1.getRealFloat() + 100);
+
         RandomAccessibleInterval blurred = ij.op().filter().gauss(rai, 5);
         ij.ui().show(blurred);
 
