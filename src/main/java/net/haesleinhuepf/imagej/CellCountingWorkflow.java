@@ -15,11 +15,13 @@ import net.imagej.ImageJ;
 import net.imagej.legacy.LegacyService;
 import net.imagej.ops.OpService;
 import net.imagej.patcher.LegacyInjector;
+import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -60,6 +62,9 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         ij.ui().show(blurred);
 
         // threshold the image
+        IterableInterval ii = Views.iterable(rai);
+        IterableInterval otsuThresholded = ij.op().threshold().otsu(ii);
+        ij.ui().show(otsuThresholded);
 
         // apply connected components labelling
 
