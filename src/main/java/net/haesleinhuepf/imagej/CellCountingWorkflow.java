@@ -128,7 +128,7 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         ij.ui().showUI();
 
         // ask the user for a file to open
-        final File file = new File("src/main/resources/blobs.gif");
+        final File file = new File("src/main/resources/drosophila_florence116.tif");
                 //ij.ui().chooseFile(null, "open");
 
         if (file != null) {
