@@ -94,33 +94,35 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         // measure the size of the labels and write them in a table
         IntColumn indexColumn = new IntColumn();
         FloatColumn areaColumn = new FloatColumn();
+        FloatColumn averageColumn = new FloatColumn();
 
         Calibration calibration = inputImage.getCalibration();
+        
 
         LabelRegions<IntegerType> regions = new LabelRegions(cca);
         int count = 0;
         for (LabelRegion region : regions) {
-            System.out.println("Region: " + region.size());
 
-            indexColumn.add(count);
-            areaColumn.add((float)(region.size() * calibration.pixelWidth * calibration.pixelHeight));
+            long pixelCount = region.size();
+            if (pixelCount < 9) {
+                System.out.println("Region: " + region.size());
+
+                indexColumn.add(count);
+                areaColumn.add((float) (pixelCount * calibration.pixelWidth * calibration.pixelHeight));
+
+                IterableInterval sample = Regions.sample(region, rai);
+                RealType mean = ij.op().stats().mean(sample);
+                averageColumn.add(mean.getRealFloat());
+            }
             count ++;
         }
 
         Table table = new DefaultGenericTable();
         table.add(indexColumn);
         table.add(areaColumn);
+        table.add(averageColumn);
         table.setColumnHeader(0, "Index");
         table.setColumnHeader(1, "Area in " + calibration.getUnit());
-
-        // measure the intensity of the labels and write them in the same table
-        FloatColumn averageColumn = new FloatColumn();
-        for (LabelRegion region : regions) {
-            IterableInterval sample = Regions.sample(region, rai);
-            RealType mean = ij.op().stats().mean(sample);
-            averageColumn.add(mean.getRealFloat());
-        }
-        table.add(averageColumn);
         table.setColumnHeader(2, "Mean intensity");
         ij.ui().show(table);
     }
