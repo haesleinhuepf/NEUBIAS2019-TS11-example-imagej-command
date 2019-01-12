@@ -23,6 +23,7 @@ import net.imglib2.algorithm.labeling.ConnectedComponents;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.roi.Regions;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
@@ -98,9 +99,17 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         table.add(areaColumn);
         table.setColumnHeader(0, "Index");
         table.setColumnHeader(1, "Area in " + calibration.getUnit());
-        ij.ui().show(table);
 
         // measure the intensity of the labels and write them in the same table
+        FloatColumn averageColumn = new FloatColumn();
+        for (LabelRegion region : regions) {
+            IterableInterval sample = Regions.sample(region, rai);
+            RealType mean = ij.op().stats().mean(sample);
+            averageColumn.add(mean.getRealFloat());
+        }
+        table.add(averageColumn);
+        table.setColumnHeader(2, "Mean intensity");
+        ij.ui().show(table);
 
 
     }
