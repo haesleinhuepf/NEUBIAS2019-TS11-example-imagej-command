@@ -41,22 +41,25 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
     //
     @Parameter
     ImagePlus inputImage;
+    
 
     @Override
     public void run() {
 
         System.out.println("Hello world!");
         System.out.println("Current image is: " + inputImage.getTitle());
-        // todo enter workflow code here
+
+        // blur the image a bit
+
+        // threshold the image
+
+        // apply connected components labelling
+
+        // measure the size of the labels and write them in a table
+
+        // measure the intensity of the labels and write them in the same table
 
 
-
-
-
-
-
-
-        
     }
 
     /**
