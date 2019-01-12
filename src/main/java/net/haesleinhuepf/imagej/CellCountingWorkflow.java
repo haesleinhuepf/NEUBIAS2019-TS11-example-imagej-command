@@ -48,6 +48,15 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         System.out.println("Hello world!");
         System.out.println("Current image is: " + inputImage.getTitle());
         // todo enter workflow code here
+
+
+
+
+
+
+
+
+        
     }
 
     /**
@@ -64,7 +73,8 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         ij.ui().showUI();
 
         // ask the user for a file to open
-        final File file = ij.ui().chooseFile(null, "open");
+        final File file = new File("src/main/resources/blobs.gif");
+                //ij.ui().chooseFile(null, "open");
 
         if (file != null) {
             // load the dataset
