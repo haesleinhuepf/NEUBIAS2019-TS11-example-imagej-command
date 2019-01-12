@@ -8,6 +8,7 @@
 
 package net.haesleinhuepf.imagej;
 
+import ij.ImagePlus;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ops.OpService;
@@ -38,10 +39,14 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
     //
     // Feel free to add more parameters here...
     //
+    @Parameter
+    ImagePlus inputImage;
 
     @Override
     public void run() {
 
+        System.out.println("Hello world!");
+        System.out.println("Current image is: " + inputImage.getTitle());
         // todo enter workflow code here
     }
 
