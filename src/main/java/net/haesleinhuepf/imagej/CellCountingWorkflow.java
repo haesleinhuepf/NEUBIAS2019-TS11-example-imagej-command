@@ -8,12 +8,17 @@
 
 package net.haesleinhuepf.imagej;
 
+import ij.IJ;
 import ij.ImagePlus;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
+import net.imagej.legacy.LegacyService;
 import net.imagej.ops.OpService;
+import net.imagej.patcher.LegacyInjector;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
@@ -36,12 +41,12 @@ import java.util.List;
  */
 @Plugin(type = Command.class, menuPath = "Plugins>Gauss Filtering")
 public class CellCountingWorkflow<T extends RealType<T>> implements Command {
-    //
-    // Feel free to add more parameters here...
-    //
+
     @Parameter
     ImagePlus inputImage;
-    
+
+    @Parameter
+    ImageJ ij;
 
     @Override
     public void run() {
@@ -50,6 +55,9 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         System.out.println("Current image is: " + inputImage.getTitle());
 
         // blur the image a bit
+        RandomAccessibleInterval rai = ImageJFunctions.convertFloat(inputImage);
+        RandomAccessibleInterval blurred = ij.op().filter().gauss(rai, 5);
+        ij.ui().show(blurred);
 
         // threshold the image
 
@@ -81,10 +89,8 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
 
         if (file != null) {
             // load the dataset
-            final Dataset dataset = ij.scifio().datasetIO().open(file.getPath());
-
-            // show the image
-            ij.ui().show(dataset);
+            ImagePlus imp = IJ.openImage(file.getAbsolutePath());
+            imp.show();
 
             // invoke the plugin
             ij.command().run(CellCountingWorkflow.class, true);
