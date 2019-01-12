@@ -66,12 +66,13 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
         System.out.println("Hello world!");
         System.out.println("Current image is: " + inputImage.getTitle());
 
-        // blur the image a bit
+        // convert and show the input image
         RandomAccessibleInterval rai = ImageJFunctions.convertFloat(inputImage);
         BdvStackSource originalBdvView = BdvFunctions.show(rai, "original");
         RealType mean1 = ij.op().stats().mean(Views.iterable(rai));
         originalBdvView.setDisplayRange(mean1.getRealFloat() - 100, mean1.getRealFloat() + 100);
 
+        // blur the image a bit
         RandomAccessibleInterval blurred = ij.op().filter().gauss(rai, 5);
         ij.ui().show(blurred);
 
