@@ -83,22 +83,22 @@ public class CellCountingWorkflow<T extends RealType<T>> implements Command {
 
         // blur the image a bit
         ClearCLBuffer blurred = clij.createCLBuffer(input.getDimensions(), NativeTypeEnum.Float);
-        Kernels.blurFast(clij, input, blurred, 1, 1, 0);
+        clij.op().blurFast(input, blurred, 1, 1, 0);
         ClearCLBuffer background = clij.createCLBuffer(input.getDimensions(), NativeTypeEnum.Float);
-        Kernels.blurFast(clij, input, background, 3, 3, 0);
+        clij.op().blurFast(input, background, 3, 3, 0);
 
         // subtract background; result becomes a Difference-of-Gaussian image
         ClearCLBuffer backgroundSubtracted = clij.createCLBuffer(input.getDimensions(), NativeTypeEnum.Float);
-        Kernels.addImagesWeighted(clij, blurred, background, backgroundSubtracted, 1f, -1f);
+        clij.op().addImagesWeighted(blurred, background, backgroundSubtracted, 1f, -1f);
         clij.show(backgroundSubtracted, "background subtracted");
 
         // threshold the image
         ClearCLBuffer thresholded = clij.createCLBuffer(input);
-        Kernels.threshold(clij, backgroundSubtracted, thresholded, 1f);
+        clij.op().threshold(backgroundSubtracted, thresholded, 1f);
 
         // erode ROI
         ClearCLBuffer eroded = clij.createCLBuffer(thresholded);
-        Kernels.erodeBox(clij, thresholded, eroded);
+        clij.op().erodeBox(thresholded, eroded);
         clij.show(eroded, "eroded");
 
         ImagePlus erodedImp = clij.pull(eroded);
